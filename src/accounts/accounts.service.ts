@@ -19,7 +19,7 @@ import { AccountQueryDto } from './dto/account-query.dto';
 export class AccountsService {
   constructor(
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async create(dto: CreateAccountDto) {
     const existing = await this.prisma.financialAccount.findFirst({
@@ -45,8 +45,8 @@ export class AccountsService {
   }
 
   async findAll(query: AccountQueryDto) {
-    const page = query.page ?? 1;
-    const take = query.take ?? 20;
+    const page = Number(query.page ?? 1);
+    const take = Number(query.take ?? 20);
 
     const where: Prisma.FinancialAccountWhereInput = {
       deletedAt: null,
