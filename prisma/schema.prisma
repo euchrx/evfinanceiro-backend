@@ -167,6 +167,14 @@ model FinancialTransaction {
 
   notes String?
 
+  proofEndToEndId  String? @unique
+  proofPixKey      String?
+  proofPayerName   String?
+  proofRecipientName String?
+  proofBankName    String?
+  proofConfidence  Int?
+  proofRawText     String?
+
   categoryId        String?
   accountId         String
   transferAccountId String?
@@ -188,6 +196,7 @@ model FinancialTransaction {
   @@index([accountId])
   @@index([categoryId])
   @@index([transactionDate])
+  @@index([proofEndToEndId])
 }
 
 model TransactionAttachment {
