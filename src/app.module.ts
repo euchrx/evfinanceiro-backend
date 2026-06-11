@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { CategoriesModule } from './categories/categories.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { FinancialTransactionsModule } from './financial-transactions/financial-transactions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { InvestmentsModule } from './investments/investments.module';
+import { TransactionAttachmentsModule } from './transaction-attachments/transaction-attachments.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     AccountsModule,
     FinancialTransactionsModule,
     DashboardModule,
+    InvestmentsModule,
+    TransactionAttachmentsModule,
   ],
 })
 export class AppModule {}
