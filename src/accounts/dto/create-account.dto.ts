@@ -1,5 +1,7 @@
 import { AccountType } from '@prisma/client';
 
+import { Type } from 'class-transformer';
+
 import {
   IsEnum,
   IsNumber,
@@ -13,12 +15,13 @@ export class CreateAccountDto {
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  name: string;
+  name!: string;
 
   @IsEnum(AccountType)
-  type: AccountType;
+  type!: AccountType;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
-  initialBalance: number;
+  initialBalance!: number;
 }

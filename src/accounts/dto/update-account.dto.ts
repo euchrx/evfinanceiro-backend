@@ -1,5 +1,7 @@
 import { AccountType } from '@prisma/client';
 
+import { Type } from 'class-transformer';
+
 import {
   IsBoolean,
   IsEnum,
@@ -23,6 +25,7 @@ export class UpdateAccountDto {
   type?: AccountType;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   initialBalance?: number;
