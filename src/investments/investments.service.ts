@@ -10,7 +10,7 @@ import { UpdateInvestmentDto } from './dto/update-investment.dto';
 
 @Injectable()
 export class InvestmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateInvestmentDto) {
     return this.prisma.investment.create({
@@ -28,8 +28,8 @@ export class InvestmentsService {
   }
 
   async findAll(query: InvestmentQueryDto) {
-    const page = query.page ?? 1;
-    const take = query.take ?? 20;
+    const page = Number(query.page ?? 1);
+    const take = Number(query.take ?? 20);
 
     const where: Prisma.InvestmentWhereInput = {
       deletedAt: null,
