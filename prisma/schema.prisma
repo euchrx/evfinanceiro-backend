@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  CREDIT_CARD
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+  CANCELED
+}
+
+enum InvestmentType {
+  FIXED_INCOME
+  STOCK
+  CRYPTO
+  FUND
+  TREASURY
+  OTHER
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  REDEEMED
+  CANCELED
+}
+
+model Investment {
+  id String @id @default(uuid())
+
+  name String
+  type InvestmentType
+
+  institution String?
+
+  investedAmount Decimal  @db.Decimal(14, 2)
+  currentAmount  Decimal? @db.Decimal(14, 2)
+  profitability  Decimal? @db.Decimal(8, 4)
+
+  investedAt DateTime
+  redeemedAt DateTime?
+
+  status InvestmentStatus @default(ACTIVE)
+
+  notes String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([type])
+  @@index([status])
+  @@index([investedAt])
+}
+
+model User {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  passwordHash String
+
+  role UserRole @default(ADMIN)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  refreshTokens RefreshToken[]
+
+  @@index([email])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Category {
+  id String @id @default(uuid())
+
+  name String
+  type CategoryType
+
+  color  String?
+  active Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  transactions FinancialTransaction[]
+
+  @@index([type])
+  @@index([active])
+}
+
+model FinancialAccount {
+  id String @id @default(uuid())
+
+  name String
+  type AccountType
+
+  initialBalance Decimal @db.Decimal(14, 2)
+
+  active Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  transactions FinancialTransaction[] @relation("TransactionAccount")
+
+  transferTransactions FinancialTransaction[] @relation("TransferAccount")
+
+  @@index([type])
+  @@index([active])
+}
+
+model FinancialTransaction {
+  id String @id @default(uuid())
+
+  description String
+
+  type TransactionType
+
+  status TransactionStatus @default(PENDING)
+
+  amount Decimal @db.Decimal(14, 2)
+
+  transactionDate DateTime
+
+  dueDate DateTime?
+  paidAt  DateTime?
+
+  notes String?
+
+  categoryId        String?
+  accountId         String
+  transferAccountId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  account FinancialAccount @relation("TransactionAccount", fields: [accountId], references: [id])
+
+  transferAccount FinancialAccount? @relation("TransferAccount", fields: [transferAccountId], references: [id])
+
+  attachments TransactionAttachment[]
+
+  @@index([type])
+  @@index([status])
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([transactionDate])
+}
+
+model TransactionAttachment {
+  id String @id @default(uuid())
+
+  originalName String
+  fileName     String
+  mimeType     String
+  fileSize     Int
+  filePath     String
+
+  transactionId String
+
+  createdAt DateTime @default(now())
+
+  transaction FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+}
