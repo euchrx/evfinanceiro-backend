@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
-import {
-  TransactionStatus,
-  TransactionType,
-} from '@prisma/client';
+import { TransactionStatus, TransactionType } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -29,6 +25,17 @@ export class DashboardService {
       23,
       59,
       59,
+      999,
+    );
+
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
     );
 
     const accounts = await this.prisma.financialAccount.findMany({
@@ -36,16 +43,19 @@ export class DashboardService {
         deletedAt: null,
         active: true,
       },
+      orderBy: {
+        name: 'asc',
+      },
     });
 
-    const transactions = await this.prisma.financialTransaction.findMany({
+    const paidTransactions = await this.prisma.financialTransaction.findMany({
       where: {
         deletedAt: null,
         status: TransactionStatus.PAID,
       },
     });
 
-    const monthTransactions = transactions.filter(
+    const monthPaidTransactions = paidTransactions.filter(
       (transaction) =>
         transaction.transactionDate >= startMonth &&
         transaction.transactionDate <= endMonth,
@@ -54,7 +64,7 @@ export class DashboardService {
     let incomeMonth = 0;
     let expenseMonth = 0;
 
-    for (const transaction of monthTransactions) {
+    for (const transaction of monthPaidTransactions) {
       const amount = Number(transaction.amount);
 
       if (transaction.type === TransactionType.INCOME) {
@@ -66,12 +76,40 @@ export class DashboardService {
       }
     }
 
+    const futureTransactions =
+      await this.prisma.financialTransaction.findMany({
+        where: {
+          deletedAt: null,
+          status: {
+            not: TransactionStatus.PAID,
+          },
+          transactionDate: {
+            gte: todayStart,
+          },
+        },
+      });
+
+    let futureIncomeMonth = 0;
+    let futureExpenseMonth = 0;
+
+    for (const transaction of futureTransactions) {
+      const amount = Number(transaction.amount);
+
+      if (transaction.type === TransactionType.INCOME) {
+        futureIncomeMonth += amount;
+      }
+
+      if (transaction.type === TransactionType.EXPENSE) {
+        futureExpenseMonth += amount;
+      }
+    }
+
     const accountBalances: AccountBalanceItem[] = [];
 
     for (const account of accounts) {
       let balance = Number(account.initialBalance);
 
-      const accountTransactions = transactions.filter(
+      const accountTransactions = paidTransactions.filter(
         (transaction) => transaction.accountId === account.id,
       );
 
@@ -91,7 +129,7 @@ export class DashboardService {
         }
       }
 
-      const transferInTransactions = transactions.filter(
+      const transferInTransactions = paidTransactions.filter(
         (transaction) => transaction.transferAccountId === account.id,
       );
 
@@ -110,6 +148,9 @@ export class DashboardService {
       (sum, account) => sum + account.balance,
       0,
     );
+
+    const futureBalancePreview =
+      currentBalance + futureIncomeMonth - futureExpenseMonth;
 
     const lastTransactions = await this.prisma.financialTransaction.findMany({
       where: {
@@ -131,6 +172,11 @@ export class DashboardService {
       incomeMonth,
       expenseMonth,
       resultMonth: incomeMonth - expenseMonth,
+
+      futureIncomeMonth,
+      futureExpenseMonth,
+      futureBalancePreview,
+
       accounts: accountBalances,
       lastTransactions,
     };
